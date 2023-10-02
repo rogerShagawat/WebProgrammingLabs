@@ -1,0 +1,15 @@
+{
+   "name": "cs-546-lab-3",
+   "version": "1.0.0",
+   "description": "My Lab 3 Module",
+   "main": "app.js",
+   "type": "module",
+   "scripts": {
+      "start": "node app.js"
+   },
+   "author": "Roger Shagawat 10441828",
+   "license": "ISC",
+   "dependencies": {
+      "axios": "^1.5.1"
+   }
+}

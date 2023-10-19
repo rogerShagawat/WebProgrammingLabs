@@ -5,8 +5,12 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-   "start": "node app.js"
+    "start": "node app.js"
   },
   "author": "Roger Shagawat 10441828",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "email-validator": "^2.0.4",
+    "mongodb": "^5.9.0"
+  }
 }

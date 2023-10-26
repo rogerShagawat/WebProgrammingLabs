@@ -1,0 +1,13 @@
+{
+  "name": "lab6",
+  "version": "1.0.0",
+  "description": "Lab 6 for Web Programming",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+   "seed": "node seed.js",
+   "start": "node app.js",
+    "test": "node test.js"
+  },
+  "author": "Roger Shagawat 10441828"
+}

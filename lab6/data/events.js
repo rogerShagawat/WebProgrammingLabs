@@ -1,4 +1,5 @@
 import { events } from "../config/mongoCollections.js";
+import * as help from "../helpers.js";
 
 // This data file should export all functions using the ES6 standard as shown in the lecture code
 
@@ -17,7 +18,20 @@ const create = async (
    //Implement Code here
    //Do NOT forget to initalize attendees to be an empty array and totalNumberOfAttendees to 0 on event creation
 
-   // TODO input checking create
+   const params = [
+      eventName,
+      eventDescription,
+      eventLocation,
+      contactEmail,
+      maxCapacity,
+      priceOfAdmission,
+      eventDate,
+      startTime,
+      endTime,
+      publicEvent,
+   ];
+
+   params.forEach((param) => help.checkIsUndefined(param));
 
    let newEvent = {};
    newEvent["eventName"] = eventName;
@@ -30,6 +44,10 @@ const create = async (
    newEvent["startTime"] = startTime.toUpperCase();
    newEvent["endTime"] = endTime.toUpperCase();
    newEvent["publicEvent"] = publicEvent;
+   newEvent["attendees"] = [];
+   newEvent["totalNumberOfAttendees"] = 0;
+
+   newEvent = help.checkAndFixEventObject(newEvent, "New event");
 
    const eventCollection = await events();
    const insertInfo = await eventCollection.insertOne(newEvent);
@@ -43,7 +61,9 @@ const create = async (
 
 const getAll = async () => {
    const eventCollection = await events();
-   const eventList = await eventCollection.find({}).toArray();
+   const eventList = await eventCollection
+      .find({}, { projection: { _id: 1, eventName: 1 } })
+      .toArray();
    return eventList;
 };
 

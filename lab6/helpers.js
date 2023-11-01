@@ -1,5 +1,7 @@
 // You can add and export any helper functions you want here - if you aren't using any, then you can just leave this file as is
 
+import { eventData } from "./data/index.js";
+import { events } from "./config/mongoCollections.js";
 import * as EmailValidator from "email-validator";
 import { ObjectId } from "mongodb";
 
@@ -71,7 +73,7 @@ const valNameConditional = (valName) => {
    } else if (typeof valName === "number") {
       valName = `Value at position ${valName}`;
    } else if (typeof valName !== "string") {
-      throw `valName not of valid type`;
+      throw `valName ${JSON.stringify(valName)} not of valid type`;
    }
    return valName;
 };
@@ -148,7 +150,7 @@ const checkIsProperTimeFormat = (val, valName) => {
    const badTimeString = `${valName} not a valid time.`;
    const AMPM = ["AM", "PM"];
 
-   let regex = new RegExp(/((1[0-2]|0?[1-9]):([0-5][0-9]) ?([AaPp][Mm]))/);
+   let regex = new RegExp(/((1[1-2]|0?[1-9]):([0-5][0-9])\s?([AP][M]))/);
    if (regex.test(val) !== true) throw badTimeString;
 
    let splitVal;
@@ -156,13 +158,14 @@ const checkIsProperTimeFormat = (val, valName) => {
    if (splitVal.length !== 2) throw badTimeString;
    if (
       !(splitVal[0].length === 2 || splitVal[0].length === 1) ||
-      splitVal[1].length !== 4
+      splitVal[1].length !== 5
    ) {
       throw badTimeString;
    }
 
+   if (splitVal[0].charAt(0).match("0")) throw badTimeString;
+
    let hours = Number(splitVal[0]);
-   if (hours.charAt(0).match("0")) throw badTimeString;
 
    if (isNaN(hours) || hours > 12 || hours < 1) throw badTimeString;
 
@@ -170,7 +173,7 @@ const checkIsProperTimeFormat = (val, valName) => {
 
    if (isNaN(minutes) || minutes > 59 || minutes < 0) throw badTimeString;
 
-   let amPm = splitVal[1].substring(2);
+   let amPm = splitVal[1].substring(2).trim();
 
    if (!AMPM.includes(amPm)) throw badTimeString;
 
@@ -182,7 +185,7 @@ const convertTo24HourTime = (timeStr) => {
    checkIsProperTimeFormat(timeStr);
    timeStr = timeStr.trim().toUpperCase();
    const meridiem = timeStr.substring(timeStr.length - 2);
-   let [hours, minutes] = timeStr.substring(0, timeStr.length - 2).split(":");
+   let [hours, minutes] = timeStr.substring(0, timeStr.length - 3).split(":");
    if (hours === "12") {
       hours = "00";
    }
@@ -296,7 +299,7 @@ export const checkAndFixEventObject = (val, valName) => {
       val.totalNumberOfAttendees,
       `totalNumberOfAttendees in ${valName}`
    );
-   if (totalNumberOfAttendees < 0)
+   if (val.totalNumberOfAttendees < 0)
       throw `totalNumberOfAttendees in ${valName} less than 0`;
 
    return val;
@@ -337,27 +340,104 @@ const checkIsProperEventLocation = (val, valName) => {
    return val;
 };
 
-const checkAndFixAttendees = (val, valName) => {
-   const validAttendeeKeys = [
-      "eventId",
-      "firstName",
-      "lastName",
-      "emailAddress",
-   ];
+export const checkIsProperId = (id, valName) => {
+   valName = valNameConditional(valName);
+   id = checkIsUndefined(id, valName);
+   id = checkIsProperString(id, valName);
+   id = id.trim();
+   if (!ObjectId.isValid(id)) throw `${valName} is invalid id`;
+   return id;
+};
 
-   valName = valNameConditional(val, valName);
+export const checkIsProperEventId = async (eventId, valName) => {
+   valName = valNameConditional(valName);
+   eventId = checkIsProperString(eventId, valName);
+   if (!ObjectId.isValid(eventId)) throw `${valName} is invalid eventId`;
+   const event = await eventData.get(eventId);
+   if (!event) throw `no event associated with ${eventId} exists`;
+   return eventId;
+};
+
+export const checkAndFixAttendees = async (eventId, val, valName) => {
+   const validAttendeeKeys = ["_id", "firstName", "lastName", "emailAddress"];
+
+   await checkIsProperEventId(eventId, `${valName} event id`);
+
+   valName = valNameConditional(valName);
    val = checkIsProperObject(val, valName);
    val = checkObjectHasKeys(val, valName, validAttendeeKeys);
    if (validAttendeeKeys.length !== Object.keys(val).length)
       throw `${valName} does not have the correct keys`;
 
-   if (!ObjectId.isValid(val.eventId)) throw `${valName} has invalid eventId`;
-   // TODO check if eventId actually exists in the db
+   if (!ObjectId.isValid(val._id)) throw `${valName} has invalid id`;
+   val.firstName = checkIsProperString(val.firstName);
+   val.lastName = checkIsProperString(val.lastName);
+   val.emailAddress = checkIsProperString(val.emailAddress);
 
-   if (!EmailValidator.validate(val.contactEmail))
-      throw `contactEmail malformed`;
-   // TODO check if email exists in attendees for this event
-   // TODO check if attendees is already full
+   // check if eventId actually exists in the db
+
+   if (!EmailValidator.validate(val.emailAddress))
+      throw `${val.emailAddress} emailAddress malformed`;
+
+   // check if email exists in attendees for this event
+   const event = await eventData.get(eventId);
+
+   const emailsMatched = event.attendees.filter(
+      (attendee) => !attendee.emailAddress.localeCompare(val.emailAddress)
+   );
+
+   if (emailsMatched.length > 0)
+      throw `${val.emailAddress} already in event ${event.eventName}`;
+
+   // check if attendees is already full
+   if (event.totalNumberOfAttendees + 1 > event.maxCapacity)
+      throw `cannot add attendee ${event.eventName} at max capacity of ${event.maxCapacity}`;
 
    return val;
+};
+
+export const checkIsProperEventPost = (val, valName) => {
+   val = checkIsProperObject(val, valName);
+   const validKeys = [
+      "eventName",
+      "description",
+      "eventLocation",
+      "contactEmail",
+      "maxCapacity",
+      "priceOfAdmission",
+      "eventDate",
+      "startTime",
+      "endTime",
+      "publicEvent",
+   ];
+
+   const keysFromVal = Object.keys(val);
+   if (validKeys.length !== keysFromVal.length)
+      throw `${valName} has malformed body`;
+
+   checkObjectHasKeys(val, valName, validKeys);
+   return val;
+};
+
+export const checkIsProperEventPut = (val, valName) => {
+   return checkIsProperEventPost(val, valName);
+};
+
+export const checkIsProperAttendeePost = (val, valName) => {
+   const validKeys = ["firstName", "lastName", "emailAddress"];
+
+   val = checkIsProperObject(val, valName);
+
+   const keysFromVal = Object.keys(val);
+   if (validKeys.length !== keysFromVal.length)
+      throw `${valName} has malformed body`;
+
+   checkObjectHasKeys(val, valName, validKeys);
+
+   return val;
+};
+
+
+export const checkIsProperAttendeePut = (val, valName) => {
+   return checkIsProperAttendeePost(val, valName);
 };

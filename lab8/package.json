@@ -1,0 +1,16 @@
+{
+   "name": "lab8",
+   "version": "1.0.0",
+   "description": "My Lab 8 for web programming",
+   "main": "app.js",
+   "type": "module",
+   "scripts": {
+      "start": "node app.js",
+      "test": "node test.js"
+   },
+   "author": "Roger Shagawat 10441828",
+   "license": "ISC",
+   "dependencies": {
+      "axios": "^1.6.0"
+   }
+}

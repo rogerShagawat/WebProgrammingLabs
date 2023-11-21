@@ -1,0 +1,17 @@
+{
+   "name": "lab10",
+   "version": "1.0.0",
+   "description": "Lab 10 for Web Programming, a middleware for login and password hashing",
+   "main": "app.js",
+   "type": "module",
+   "scripts": {
+      "start": "node app.js",
+      "test": "node test.js"
+   },
+   "author": "Roger Shagawat 10441828",
+   "license": "ISC",
+   "dependencies": {
+      "bcrypt": "^5.1.1",
+      "express-session": "^1.17.3"
+   }
+}

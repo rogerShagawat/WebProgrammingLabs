@@ -1,1 +1,44 @@
 /* You will create a CSS stylesheet in /public/css/styles.css; this file should have at least 5 rulesets.  You will need to utilize all 5 rulesets on each of the pages (not every page has to use all 5 rulesets each but all 5 rulesets must be utilized by the various pages in your application).  So you can have some rulesets for one page, some for another page but there needs to be at least 5 total rulesets that are used between all the pages.  */
+
+body {
+   background-color: rgb(33, 26, 16);
+   color: rgb(205, 176, 139);
+}
+
+label {
+   display: block;
+   margin: 5px;
+}
+
+a {
+   margin: 10px;
+}
+
+a:link {
+   color: orange;
+}
+
+a:visited {
+   color: rgb(203, 71, 91)
+}
+
+a:hover {
+   color: rgb(255, 123, 0);
+}
+
+a:active {
+   color: lightblue;
+}
+
+.error {
+   color: rgb(255, 119, 119);
+}
+
+.container {
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+   text-align: center;
+   gap: 10px;
+}

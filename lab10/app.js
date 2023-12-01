@@ -43,3 +43,117 @@ ONLY USERS WITH A ROLE of admin SHOULD BE ABLE TO ACCESS THE /admin ROUTE!
 2. if the user is logged in, the middleware will "fall through" to the next route calling the next() callback.
 
 */
+
+import session from "express-session";
+import express from "express";
+const app = express();
+import configRoutes from "./routes/index.js";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import exphbs from "express-handlebars";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const staticDir = express.static(__dirname + "/public");
+
+app.use("/public", staticDir);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use(
+   session({
+      name: "AuthState",
+      secret: "some secret string!",
+      resave: false,
+      saveUninitialized: false,
+   })
+);
+
+app.use("/", async (req, res, next) => {
+   // A
+   const timeStamp = new Date().toUTCString();
+   let authString = "(Non-Authenticated User)";
+
+   if (req.session.user) {
+      authString = "(Authenticated User)";
+   }
+
+   console.log(`[${timeStamp}] ${req.method} ${req.originalUrl} ${authString}`);
+
+   // B
+   if (req.originalUrl === "/") {
+      if (req.session.user) {
+         if (req.session.user.role === "admin") {
+            return res.redirect("/admin");
+         }
+         if (req.session.user.role === "user") {
+            return res.redirect("/protected");
+         }
+      }
+      return res.redirect("/login");
+   }
+
+   next();
+});
+
+app.use("/login", (req, res, next) => {
+   if (!req.session.user) {
+      return next();
+   }
+   if (req.session.user.role === "user") {
+      return res.redirect("/protected");
+   }
+   if (req.session.user.role === "admin") {
+      return res.redirect("/admin");
+   }
+   next();
+});
+
+app.use("/register", (req, res, next) => {
+   if (!req.session.user) {
+      return next();
+   }
+   if (req.session.user.role === "user") {
+      return res.redirect("/protected");
+   }
+   if (req.session.user.role === "admin") {
+      return res.redirect("/admin");
+   }
+   next();
+});
+
+app.use("/logout", (req, res, next) => {
+   if (!req.session.user) {
+      return res.redirect("/login");
+   }
+   if (req.session.user) {
+      req.session.destroy();
+   }
+   next();
+});
+
+app.use("/protected", (req, res, next) => {
+   if (!req.session.user) {
+      return res.redirect("/login");
+   }
+   next();
+});
+
+app.use("/admin", (req, res, next) => {
+   if (!req.session.user) {
+      return res.redirect("/login");
+   } else if (req.session.user.role !== "admin") {
+      return res.redirect("/error");
+   }
+   next();
+});
+
+app.engine("handlebars", exphbs.engine({ defaultLayout: "main" }));
+app.set("view engine", "handlebars");
+
+configRoutes(app);
+
+app.listen(3000, () => {
+   console.log("We've now got a server!");
+   console.log("Your routes will be running on http://localhost:3000");
+});

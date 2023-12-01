@@ -3,3 +3,51 @@
 registration handelbars
 
 --}}
+
+
+<div id="local-error" class="error" hidden>Client Side Should Change</div>
+
+{{#if hasErrors}}
+<ul class="error">
+   {{#each errors}}
+   <li>
+      {{this}}
+   </li>
+   {{/each}}
+</ul>
+{{/if}}
+
+<div class="container">
+   <form action="/register" method="POST" id="register-form">
+      <label for="firstNameInput">First Name:
+         <input type="text" name="firstNameInput" id="firstNameInput" value="{{user.firstName}}">
+      </label>
+
+      <label for="lastNameInput">Last Name:
+         <input type="text" name="lastNameInput" id="lastNameInput" value="{{user.lastName}}">
+      </label>
+
+      <label for="emailAddressInput">Email Address:
+         <input type="email" name="emailAddressInput" id="emailAddressInput" value="{{user.emailAddress}}">
+      </label>
+
+      <label for="passwordInput">Password:
+         <input type="password" name="passwordInput" id="passwordInput">
+      </label>
+
+      <label for="confirmPasswordInput">Confirm Password:
+         <input type="password" name="confirmPasswordInput" id="confirmPasswordInput">
+      </label>
+
+      <label for="roleInput">Role:
+         <select id="roleInput" name="roleInput">
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+         </select>
+      </label>
+      <input class="submit" type="submit" name="submit">
+   </form>
+
+   <a href="/login">Already have an account? Click here to log-in.</a>
+</div>
+

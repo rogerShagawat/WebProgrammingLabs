@@ -3,3 +3,32 @@
 login form handlebar template
 
 --}}
+
+
+<div id="local-error" class="error" hidden>Client Side Should Change</div>
+
+{{#if hasErrors}}
+<ul class="error">
+   {{#each errors}}
+   <li>
+      {{this}}
+   </li>
+   {{/each}}
+</ul>
+{{/if}}
+
+
+<div class="container">
+   <form action="/login" method="POST" id="login-form">
+      <label for="emailAddressInput">Email Address:
+         <input type="email" name="emailAddressInput" id="emailAddressInput">
+      </label>
+      <label for="passwordInput">
+         Password:
+         <input type="password" name="passwordInput" id="passwordInput">
+      </label>
+      <input class="submit" type="submit" name="submit" value="Submit">
+     
+   </form>
+   <a href=" /register">Click here to register!</a>
+</div>
